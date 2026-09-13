@@ -1,4 +1,8 @@
-.Rproj.user
+.DS_Store
 .Rhistory
 .RData
 .Ruserdata
+.Rproj.user/
+data/val_2026/raw/
+data/val_2026/geojson/
+data/val_2026/results/

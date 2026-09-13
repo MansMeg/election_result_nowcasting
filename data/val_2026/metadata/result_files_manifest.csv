@@ -1,2 +1,2 @@
-"md5","relative_path","url","path","downloaded","md5_actual","md5_ok"
-"826de59130e60960c74060fd6acc9098","./p/rd/Val_2026_preliminar_00_RD.zip","https://resultat.val.se/resultatfiler/val2026/p/rd/Val_2026_preliminar_00_RD.zip","data/val_2026/results/p/rd/Val_2026_preliminar_00_RD.zip",TRUE,"826de59130e60960c74060fd6acc9098",TRUE
+"md5","relative_path","url","path","downloaded","downloaded_minute","md5_actual","md5_ok"
+"4a5e71a4d02f46774d1a7e2511e722e1","./p/rd/Val_2026_preliminar_00_RD.zip","https://resultat.val.se/resultatfiler/val2026/p/rd/Val_2026_preliminar_00_RD.zip","data/val_2026/results/p/rd/Val_2026_preliminar_00_RD_20.43.zip",TRUE,"20.43","4a5e71a4d02f46774d1a7e2511e722e1",TRUE

@@ -134,6 +134,69 @@ read_val_2026_result_index <- function(index_path) {
   )
 }
 
+val_2026_timestamped_path <- function(path, time = Sys.time()) {
+  suffix <- format(time, "%H.%M")
+  extension <- tools::file_ext(path)
+
+  if (!nzchar(extension)) {
+    return(paste0(path, "_", suffix))
+  }
+
+  stem <- substr(path, 1L, nchar(path) - nchar(extension) - 1L)
+  paste0(stem, "_", suffix, ".", extension)
+}
+
+escape_regex <- function(x) {
+  gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", x, perl = TRUE)
+}
+
+val_2026_result_candidates <- function(path) {
+  directory <- dirname(path)
+  filename <- basename(path)
+  extension <- tools::file_ext(filename)
+  stem <- if (nzchar(extension)) {
+    substr(filename, 1L, nchar(filename) - nchar(extension) - 1L)
+  } else {
+    filename
+  }
+
+  pattern <- paste0(
+    "^",
+    escape_regex(stem),
+    "_[0-9]{2}\\.[0-9]{2}",
+    if (nzchar(extension)) paste0("\\.", escape_regex(extension)) else "",
+    "$"
+  )
+
+  timestamped <- if (dir.exists(directory)) {
+    file.path(directory, list.files(directory, pattern = pattern))
+  } else {
+    character()
+  }
+
+  unique(c(path, timestamped))
+}
+
+val_2026_find_result_by_md5 <- function(path, expected_md5) {
+  candidates <- val_2026_result_candidates(path)
+  candidates <- candidates[file.exists(candidates)]
+  if (length(candidates) == 0L) {
+    return(NA_character_)
+  }
+
+  md5 <- unname(tools::md5sum(candidates))
+  matches <- candidates[identical_character(md5, expected_md5)]
+  if (length(matches) == 0L) {
+    return(NA_character_)
+  }
+
+  matches[which.max(file.info(matches)$mtime)]
+}
+
+identical_character <- function(x, value) {
+  !is.na(x) & x == value
+}
+
 download_val_2026_result_files <- function(data_dir = "data/val_2026",
                                            force = FALSE,
                                            quiet = FALSE,
@@ -185,21 +248,22 @@ download_val_2026_result_files <- function(data_dir = "data/val_2026",
   )
   manifest$path <- file.path(results_dir, sub("^\\./", "", manifest$relative_path))
   manifest$downloaded <- FALSE
+  manifest$downloaded_minute <- NA_character_
   manifest$md5_actual <- NA_character_
   manifest$md5_ok <- FALSE
 
   for (i in seq_len(nrow(manifest))) {
-    dest <- manifest$path[i]
-    dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE)
+    unstamped_dest <- manifest$path[i]
+    dir.create(dirname(unstamped_dest), recursive = TRUE, showWarnings = FALSE)
 
-    needs_download <- isTRUE(force) || !file.exists(dest)
-    if (!needs_download && !identical(unname(tools::md5sum(dest)), manifest$md5[i])) {
-      needs_download <- TRUE
-    }
+    existing <- val_2026_find_result_by_md5(unstamped_dest, manifest$md5[i])
+    needs_download <- isTRUE(force) || is.na(existing)
 
     if (needs_download) {
+      download_time <- Sys.time()
+      dest <- val_2026_timestamped_path(unstamped_dest, download_time)
       if (!quiet) {
-        message("Downloading result file ", manifest$relative_path[i])
+        message("Downloading result file ", manifest$relative_path[i], " -> ", dest)
       }
       utils::download.file(
         url = manifest$url[i],
@@ -208,8 +272,12 @@ download_val_2026_result_files <- function(data_dir = "data/val_2026",
         quiet = quiet
       )
       manifest$downloaded[i] <- TRUE
+      manifest$downloaded_minute[i] <- format(download_time, "%H.%M")
+    } else {
+      dest <- existing
     }
 
+    manifest$path[i] <- dest
     if (file.exists(dest)) {
       manifest$md5_actual[i] <- unname(tools::md5sum(dest))
       manifest$md5_ok[i] <- identical(manifest$md5_actual[i], manifest$md5[i])

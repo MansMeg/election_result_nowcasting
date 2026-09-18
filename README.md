@@ -34,7 +34,21 @@ When the index starts listing result ZIP files, download or refresh them with:
 Rscript script/download_val_2026_result_files.R
 ```
 
-The reusable function is `download_val_2026_result_files()`. It preserves the relative paths from `index.md5`, writes files under `data/val_2026/results/`, and checks MD5 checksums.
+The reusable function is `download_val_2026_result_files()`. It preserves the relative paths from `index.md5`, writes files under `data/val_2026/results/`, appends the download minute to each result ZIP name, and checks MD5 checksums.
+
+For example, a result file published by Valmyndigheten as:
+
+```text
+./p/rd/Val_2026_preliminar_00_RD.zip
+```
+
+is saved locally as:
+
+```text
+data/val_2026/results/p/rd/Val_2026_preliminar_00_RD_HH.MM.zip
+```
+
+If Valmyndigheten updates the same result ZIP later in the evening, rerunning the script keeps the earlier snapshot and writes a new minute-stamped file.
 
 ## Layout
 
